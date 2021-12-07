@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.annotation.PassToken;
 import com.example.demo.annotation.UserLoginToken;
+import com.example.demo.exception.SpringException;
+import com.example.demo.handler.RequestThreadLocal;
 import com.example.demo.models.User;
 import com.example.demo.service.TokenService;
 import com.example.demo.service.UserService;
@@ -23,24 +25,30 @@ public class UserController {
     TokenService tokenService;
 
     //登录
+    @PassToken
     @PostMapping("/login")
     public Object login( User user){
-        JSONObject jsonObject=new JSONObject();
-        User userForBase=userService.findByUsername(user);
-        if(userForBase==null){
-            jsonObject.put("message","登录失败,用户不存在");
-            return jsonObject;
-        }else {
-            if (!userForBase.getPassword().equals(user.getPassword())){
-                jsonObject.put("message","登录失败,密码错误");
-                return jsonObject;
+        try {
+            RequestThreadLocal.setAlarmRequestParam(JSONObject.toJSONString(user));
+            JSONObject jsonObject=new JSONObject();
+            User userForBase=userService.findByUsername(user);
+            if(userForBase==null){
+                throw new SpringException("用户不存在");
             }else {
-                String token = tokenService.getToken(userForBase);
-                jsonObject.put("token", token);
-                jsonObject.put("user", userForBase);
-                return jsonObject;
+                if (!userForBase.getPassword().equals(user.getPassword())){
+                    jsonObject.put("message","登录失败,密码错误");
+                    return jsonObject;
+                }else {
+                    String token = tokenService.getToken(userForBase);
+                    jsonObject.put("token", token);
+                    jsonObject.put("user", userForBase);
+                    return jsonObject;
+                }
             }
+        }catch (Exception e){
+            throw new SpringException("系统异常");
         }
+
     }
 
     @UserLoginToken
