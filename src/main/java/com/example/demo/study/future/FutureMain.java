@@ -25,7 +25,7 @@ public class FutureMain {
 
         List<Future<String>> list = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1000; i++) {
             Future<String> test = futureService.test();
             list.add(test);
         }
